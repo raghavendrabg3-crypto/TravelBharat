@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TravelBharat | Digital Tourism Encyclopedia</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #f3a705;   
+            --secondary: #138808; 
+            --dark: #000080;      
+            --glass: rgba(238, 245, 243, 0.9);
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0; display: flex; height: 100vh;
+            background-color: #e5e5f7;
+            background-image: radial-gradient(#FF993315 0.5px, transparent 0.5px), radial-gradient(#13880815 0.5px, #f4f7f6 0.5px);
+            background-size: 20px 20px;
+            overflow: hidden;
+        }
+
+        /* --- SIDEBAR --- */
+        .sidebar {
+            width: 260px; background: var(--dark); color: white;
+            display: flex; flex-direction: column; padding: 25px;
+            box-shadow: 4px 0 15px rgba(0,0,0,0.2); z-index: 100;
+        }
+        .sidebar h2 { font-size: 26px; margin: 0; color: var(--primary); }
+        .sidebar p { font-size: 13px; opacity: 0.8; margin-bottom: 25px; }
+
+        .nav-link {
+            color: rgba(255,255,255,0.7); text-decoration: none;
+            padding: 12px; margin-bottom: 5px; display: flex;
+            align-items: center; border-radius: 10px; transition: 0.3s; cursor: pointer;
+        }
+        .nav-link:hover, .nav-link.active {
+            background: linear-gradient(90deg, rgba(255,153,51,0.2), transparent);
+            color: var(--primary); padding-left: 20px;
+        }
+
+        /* --- AUTH MODAL --- */
+        #loginModal {
+            display: none; position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%; background: rgba(0,0,0,0.8);
+            z-index: 2000; align-items: center; justify-content: center;
+            backdrop-filter: blur(8px);
+        }
+        .login-card {
+            background: white; width: 380px; padding: 35px;
+            border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            text-align: center;
+        }
+        .login-card input {
+            width: 100%; padding: 12px; margin-bottom: 15px;
+            border: 1px solid #ddd; border-radius: 8px; outline: none;
+        }
+        .btn-auth {
+            background: var(--dark); color: white; border: none;
+            width: 100%; padding: 14px; border-radius: 8px;
+            cursor: pointer; font-weight: bold; font-size: 14px;
+        }
+        .auth-toggle-link { color: var(--primary); cursor: pointer; font-weight: 600; }
+
+        /* --- MAIN AREA --- */
+        .main-container { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .top-nav {
+            background: var(--glass); padding: 15px 40px;
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+        .search-input {
+            width: 400px; padding: 12px 20px 12px 45px;
+            border: none; border-radius: 30px; background: #fff;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05); outline: none;
+        }
+        .filter-bar { padding: 20px 40px; display: flex; gap: 15px; }
+        .chip {
+            padding: 10px 22px; border: none; background: white;
+            border-radius: 30px; cursor: pointer; font-weight: 600; color: var(--dark);
+        }
+        .chip.active { background: var(--primary); color: white; }
+
+        /* --- STATE CARDS --- */
+        .content-scroll { flex: 1; padding: 10px 40px 40px 40px; overflow-y: auto; }
+        .state-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 35px; }
+        
+        .state-card {
+            background: var(--glass); border-radius: 20px; overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08); transition: 0.4s; 
+            position: relative;
+        }
+        .state-card:hover { transform: translateY(-12px); }
+
+        .fav-btn {
+            position: absolute; top: 15px; right: 15px;
+            background: rgba(255,255,255,0.9); border: none;
+            width: 40px; height: 40px; border-radius: 50%;
+            cursor: pointer; z-index: 15;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            transition: 0.3s;
+        }
+        .fav-btn i { color: #ccc; font-size: 20px; }
+        .fav-btn.active i { color: #ff4757; }
+
+        .card-img { width: 100%; height: 220px; object-fit: cover; display: block; }
+        .card-content { padding: 25px; }
+        .btn-view {
+            background: linear-gradient(45deg, var(--secondary), #2ecc71);
+            color: white; border: none; padding: 14px; border-radius: 12px; width: 100%; cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loginModal">
+        <div class="login-card">
+            <h3 id="authTitle">Admin Login</h3>
+            <p id="authSub" style="font-size: 12px; color: #777; margin-bottom: 20px;">Please enter your credentials</p>
+            <input type="text" id="adminUser" placeholder="Username">
+            <input type="email" id="adminEmail" placeholder="Email Address" style="display:none;">
+            <input type="password" id="adminPass" placeholder="Password">
+            <button class="btn-auth" id="authBtn" onclick="handleAuth()">Login to Dashboard</button>
+            <div style="margin-top: 20px; font-size: 13px; color: #555;">
+                <div id="forgotBox"><span class="auth-toggle-link" onclick="setAuthMode('forgot')">Forgot Password?</span></div>
+                <hr style="margin: 15px 0; border: 0; border-top: 1px solid #eee;">
+                <span id="toggleText">New Admin?</span> 
+                <span class="auth-toggle-link" id="toggleLink" onclick="setAuthMode('register')">Create Account</span>
+            </div>
+            <span style="display:block; margin-top:15px; cursor:pointer; font-size:12px; color:#bbb;" onclick="closeLogin()">Cancel</span>
+        </div>
+    </div>
+
+    <div class="sidebar">
+        <h2>TravelBharat</h2>
+        <p>Explore the Soul of India</p>
+        <div class="nav-link active" onclick="location.reload()"><i class="fas fa-globe-asia"></i> All India</div>
+        <div class="nav-link" onclick="showFavorites(event)"><i class="fas fa-heart"></i> Saved Places</div>
+        
+        <div class="sidebar-section-title" style="margin-top:20px; opacity:0.5; font-size:11px; text-transform:uppercase;">Zones</div>
+        <div class="nav-link" onclick="filterByZone('North', event)"><i class="fas fa-mountain"></i> North India</div>
+        <div class="nav-link" onclick="filterByZone('South', event)"><i class="fas fa-umbrella-beach"></i> South India</div>
+        <div class="nav-link" onclick="filterByZone('West', event)"><i class="fas fa-sun"></i> West India</div>
+        <div class="nav-link" onclick="filterByZone('East', event)"><i class="fas fa-landmark"></i> East India</div>
+        
+        <div style="margin-top: auto; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 15px;">
+            <div class="nav-link" style="margin:0; padding:5px;" onclick="openLogin()">
+                <i class="fas fa-user-shield">  </i> Admin Portal
+            </div>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div class="top-nav">
+            <div style="position:relative;">
+                <i class="fas fa-search" style="position:absolute; left:15px; top:15px; color:#888;"></i>
+                <input type="text" id="searchInput" class="search-input" placeholder="Search destinations..." onkeyup="handleSearch()">
+            </div>
+            <div style="color: var(--dark); font-weight: bold;"><i class="fas fa-user-circle"></i> WELCOME RIDER</div>
+        </div>
+
+        <div class="filter-bar">
+            <button class="chip active" onclick="filterByCategory('All', this)">All</button>
+            <button class="chip" onclick="filterByCategory('Heritage', this)">Heritage</button>
+            <button class="chip" onclick="filterByCategory('Nature', this)">Nature</button>
+            <button class="chip" onclick="filterByCategory('Religious', this)">Religious</button>
+            <button class="chip" onclick="filterByCategory('Adventure', this)">Adventure</button>
+        </div>
+
+        <div class="content-scroll">
+            <h2 id="viewTitle" style="color: var(--dark); margin-bottom: 30px;">Featured Destinations</h2>
+            <div class="state-grid" id="stateGrid"></div>
+        </div>
+    </div>
+
+    <script>
+        let allStates = [];
+        let currentMode = 'login';
+
+        async function init() {
+            try {
+                const response = await fetch('/api/states');
+                allStates = await response.json();
+                render(allStates);
+            } catch (err) { console.error(err); }
+        }
+
+        // --- AUTH LOGIC ---
+        function openLogin() { document.getElementById('loginModal').style.display = 'flex'; setAuthMode('login'); }
+        function closeLogin() { document.getElementById('loginModal').style.display = 'none'; }
+        function setAuthMode(mode) {
+            currentMode = mode;
+            const title = document.getElementById('authTitle');
+            const sub = document.getElementById('authSub');
+            const btn = document.getElementById('authBtn');
+            const emailInp = document.getElementById('adminEmail');
+            const passInp = document.getElementById('adminPass');
+            const toggleText = document.getElementById('toggleText');
+            const toggleLink = document.getElementById('toggleLink');
+            const forgotBox = document.getElementById('forgotBox');
+
+            emailInp.style.display = (mode === 'register') ? 'block' : 'none';
+            passInp.style.display = (mode === 'forgot') ? 'none' : 'block';
+            forgotBox.style.display = (mode === 'login') ? 'block' : 'none';
+
+            if(mode === 'login') {
+                title.innerText = "Admin Login"; sub.innerText = "Please enter your credentials";
+                btn.innerText = "Login to Dashboard"; toggleText.innerText = "New Admin?";
+                toggleLink.innerText = "Create Account"; toggleLink.onclick = () => setAuthMode('register');
+            } else if (mode === 'register') {
+                title.innerText = "Register Admin"; sub.innerText = "Create a new management account";
+                btn.innerText = "Sign Up"; toggleText.innerText = "Have an account?";
+                toggleLink.innerText = "Login here"; toggleLink.onclick = () => setAuthMode('login');
+            } else {
+                title.innerText = "Reset Password"; sub.innerText = "Enter your username to recover access";
+                btn.innerText = "Send Reset Link"; toggleText.innerText = "Remembered it?";
+                toggleLink.innerText = "Back to Login"; toggleLink.onclick = () => setAuthMode('login');
+            }
+        }
+
+        async function handleAuth() {
+            const user = document.getElementById('adminUser').value;
+            const pass = document.getElementById('adminPass').value;
+            const email = document.getElementById('adminEmail').value;
+            if(!user) return alert("Please enter username");
+
+            if(currentMode === 'login') {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ user, pass })
+                });
+                const data = await res.json();
+                if(data.success) window.location.href = "/admin"; else alert("Invalid Credentials");
+            } else if(currentMode === 'register') {
+                if(!pass || !email) return alert("All fields required");
+                await fetch('/api/register', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ user, pass, email })
+                });
+                alert("Success! Now login."); setAuthMode('login');
+            } else { alert("Reset link sent."); setAuthMode('login'); }
+        }
+
+        function render(data) {
+            const grid = document.getElementById('stateGrid');
+            grid.innerHTML = data.map(s => `
+                <div class="state-card">
+                    <button class="fav-btn ${s.isFavorite ? 'active' : ''}" onclick="toggleFavorite(${s.id}, this, event)">
+                        <i class="fas fa-heart"></i>
+                    </button>
+                    <div onclick="window.location.href='details.html?id=${s.id}'" style="cursor:pointer;">
+                        <img src="${s.image}" class="card-img" onerror="this.src='https://placehold.co/600x400?text=${s.name}'">
+                        <div class="card-content">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <h3>${s.name}</h3>
+                                <span style="font-size:12px; color:var(--secondary); font-weight:bold;">${s.districts ? s.districts.length : 0} Districts</span>
+                            </div>
+                            <p style="font-size:13px; color:#888; margin: 5px 0;">Capital: ${s.capital}</p>
+                            <div style="font-size:14px; color:#666; height:40px; overflow:hidden;">${s.description}</div>
+                            <button class="btn-view">View Details</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function toggleFavorite(id, btn, event) {
+            event.stopPropagation();
+            const state = allStates.find(s => s.id === id);
+            state.isFavorite = !state.isFavorite;
+            btn.classList.toggle('active');
+            await fetch(`/api/states/${id}/favorite`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ isFavorite: state.isFavorite })
+            });
+        }
+
+        function handleSearch() {
+            const term = document.getElementById('searchInput').value.toLowerCase();
+            render(allStates.filter(s => s.name.toLowerCase().includes(term)));
+        }
+
+        function filterByCategory(cat, btn) {
+            document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+            btn.classList.add('active');
+            render(cat === 'All' ? allStates : allStates.filter(s => s.category === cat));
+        }
+
+        function filterByZone(zone, event) {
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            render(allStates.filter(s => s.zone === zone));
+        }
+
+        function showFavorites(event) {
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            render(allStates.filter(s => s.isFavorite));
+        }
+
+        init();
+    </script>
+</body>
+</html>
