@@ -2,9 +2,13 @@
   "name": "travelbharat",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "server.js",
+  "homepage": "https://raghavendrabg3-crypto.github.io/TravelBharat",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "predeploy": "echo 'Building project...'",
+    "deploy": "gh-pages -d ."
   },
   "keywords": [],
   "author": "",
@@ -12,5 +16,8 @@
   "type": "commonjs",
   "dependencies": {
     "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "gh-pages": "^6.3.0"
   }
 }
